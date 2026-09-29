@@ -1,0 +1,23 @@
+app-id: io.github.PTCGLLinux
+
+runtime: org.gnome.Platform
+runtime-version: '49'
+sdk: org.gnome.Sdk
+
+command: ptcgl-linux
+
+modules:
+  - name: ptcgl-linux
+    buildsystem: simple
+
+    build-commands:
+      - python3 -m pip install --no-deps --no-build-isolation --prefix=/app .
+
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - .git
+          - .venv
+          - __pycache__
+          - '*.pyc'
