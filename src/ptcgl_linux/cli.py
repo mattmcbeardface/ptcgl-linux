@@ -8,6 +8,7 @@ import sys
 from . import __version__
 from .deeplink import CallbackError, handle_callback
 from .diagnostics import print_doctor
+from .installer import InstallError, install_ptcgl
 from .launcher import LaunchError, launch_game
 
 
@@ -61,6 +62,16 @@ def main(argv: list[str] | None = None) -> int:
         except CallbackError as exc:
             print(f"callback: {exc}", file=sys.stderr)
             return 2
+
+    if args.command == "install":
+        try:
+            paths = install_ptcgl()
+        except InstallError as exc:
+            print(f"install: {exc}", file=sys.stderr)
+            return 2
+
+        print(f"install: ready: {paths.game}")
+        return 0
 
     if args.command == "play":
         try:

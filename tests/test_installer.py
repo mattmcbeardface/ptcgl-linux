@@ -7,6 +7,8 @@ from ptcgl_linux.installer import (
     InstallError,
     bootstrap_runtime,
     initialize_prefix,
+    install_game,
+    install_ptcgl,
     install_vcrun2019,
 )
 from ptcgl_linux.runtime import RuntimePaths, vc_runtime_paths
@@ -99,6 +101,95 @@ class InstallerTests(unittest.TestCase):
                 side_effect=fake_run,
             ):
                 install_vcrun2019(paths)
+
+    def test_install_game_runs_msi(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths = make_paths(root)
+            create_prefix(paths)
+
+            msiexec = (
+                paths.prefix
+                / "drive_c"
+                / "windows"
+                / "system32"
+                / "msiexec.exe"
+            )
+            msiexec.parent.mkdir(parents=True, exist_ok=True)
+            msiexec.write_text("", encoding="utf-8")
+
+            installer = root / "PokemonTCGLiveInstaller.msi"
+            installer.write_text("test installer", encoding="utf-8")
+
+            def fake_run(argv, **kwargs):
+                self.assertEqual(argv[0], str(paths.umu))
+                self.assertEqual(argv[1], str(msiexec))
+                self.assertEqual(argv[2], "/i")
+                self.assertTrue(argv[3].startswith("Z:\\"))
+                self.assertEqual(argv[4:], ["/quiet", "/norestart"])
+
+                paths.game.parent.mkdir(parents=True, exist_ok=True)
+                paths.game.write_text("", encoding="utf-8")
+
+                return Mock(returncode=0)
+
+            with (
+                patch(
+                    "ptcgl_linux.installer.acquire_ptcgl_installer",
+                    return_value=installer,
+                ),
+                patch(
+                    "ptcgl_linux.installer.subprocess.run",
+                    side_effect=fake_run,
+                ),
+            ):
+                result = install_game(paths)
+
+            self.assertEqual(result, paths.game)
+
+    def test_install_game_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = make_paths(Path(tmp))
+            paths.game.parent.mkdir(parents=True, exist_ok=True)
+            paths.game.write_text("", encoding="utf-8")
+
+            with (
+                patch(
+                    "ptcgl_linux.installer.acquire_ptcgl_installer"
+                ) as acquire_mock,
+                patch(
+                    "ptcgl_linux.installer.subprocess.run"
+                ) as run_mock,
+            ):
+                result = install_game(paths)
+
+            self.assertEqual(result, paths.game)
+            acquire_mock.assert_not_called()
+            run_mock.assert_not_called()
+
+    def test_install_ptcgl_runs_bootstrap_then_game(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = make_paths(Path(tmp))
+
+            with (
+                patch(
+                    "ptcgl_linux.installer.bootstrap_runtime",
+                    return_value=paths,
+                ) as bootstrap_mock,
+                patch(
+                    "ptcgl_linux.installer.install_game",
+                    return_value=paths.game,
+                ) as game_mock,
+            ):
+                result = install_ptcgl(paths=paths)
+
+            self.assertEqual(result, paths)
+            bootstrap_mock.assert_called_once_with(paths=paths)
+            game_mock.assert_called_once_with(
+                paths,
+                artifact_cache=None,
+            )
+
 
     def test_bootstrap_is_idempotent_when_ready(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
