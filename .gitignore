@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+dist/
+build/
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# PTCGL/runtime artifacts - NEVER COMMIT
+*.msi
+*.exe
+*.zip
+*.tar
+*.tar.gz
+*.log
+
+prefix/
+downloads/
+runtime/
+toolchain/
+shadercache/
+state.json
+
+# OAuth/auth artifacts
+*callback*
+*oauth*
+*token*
+*secret*
+
+# Flatpak/build output
+.flatpak-builder/
+repo/
+build-dir/
