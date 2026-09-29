@@ -10,7 +10,7 @@
   <summary>Play Pokémon TCG Live on Linux</summary>
 
   <developer id="io.github.mattmcbeardface">
-    <name>Matt McBeardface</name>
+    <name>MattMcBeardface</name>
   </developer>
 
   <metadata_license>CC0-1.0</metadata_license>
@@ -45,6 +45,14 @@
   <url type="bugtracker">https://github.com/mattmcbeardface/ptcgl-linux/issues</url>
 
   <releases>
+    <release version="0.1.3" date="2026-09-29">
+      <description>
+        <p>Metadata update.</p>
+        <ul>
+          <li>Update the displayed developer name.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.2" date="2026-09-29">
       <description>
         <p>Version reporting fix.</p>
