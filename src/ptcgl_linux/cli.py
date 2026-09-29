@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 
 from . import __version__
+from .diagnostics import print_doctor
 
 
 COMMANDS = (
@@ -47,6 +48,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command is None:
         parser.print_help()
         return 0
+
+    if args.command == "doctor":
+        return print_doctor()
 
     print(f"{args.command}: not implemented yet")
     return 0
