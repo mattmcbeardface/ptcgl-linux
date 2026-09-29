@@ -36,11 +36,10 @@ toolchain/
 shadercache/
 state.json
 
-# OAuth/auth artifacts
-*callback*
-*oauth*
-*token*
-*secret*
+# Sensitive local files
+credentials/
+secrets/
+*.credentials
 
 # Flatpak/build output
 .flatpak-builder/
