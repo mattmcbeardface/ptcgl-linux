@@ -157,6 +157,171 @@ class ArtifactTests(unittest.TestCase):
                     root / "extract",
                 )
 
+    def test_symlink_chain_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            archive = root / "chain.tar"
+            destination = root / "extract"
+
+            with tarfile.open(archive, "w") as tar:
+                directory = tarfile.TarInfo("lib")
+                directory.type = tarfile.DIRTYPE
+                directory.mode = 0o755
+                tar.addfile(directory)
+
+                payload = b"library"
+                real = tarfile.TarInfo("lib/library.so.1.2.3")
+                real.size = len(payload)
+                real.mode = 0o644
+                tar.addfile(real, io.BytesIO(payload))
+
+                middle = tarfile.TarInfo("lib/library.so.1")
+                middle.type = tarfile.SYMTYPE
+                middle.linkname = "library.so.1.2.3"
+                tar.addfile(middle)
+
+                front = tarfile.TarInfo("lib/library.so")
+                front.type = tarfile.SYMTYPE
+                front.linkname = "library.so.1"
+                tar.addfile(front)
+
+            safe_extract_tar(archive, destination)
+
+            front = destination / "lib" / "library.so"
+            middle = destination / "lib" / "library.so.1"
+
+            self.assertTrue(front.is_symlink())
+            self.assertTrue(middle.is_symlink())
+            self.assertEqual(
+                front.resolve().read_bytes(),
+                b"library",
+            )
+
+    def test_symlink_through_symlinked_directory_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            archive = root / "directory-link.tar"
+            destination = root / "extract"
+
+            payload = b"SDL3"
+
+            with tarfile.open(archive, "w") as tar:
+                for directory_name in (
+                    "share",
+                    "share/mono",
+                    "share/mono/wine-mono-11.3.0",
+                    "share/mono/wine-mono-11.3.0/lib",
+                    "share/mono/wine-mono-11.3.0/lib/x86_64",
+                    "share/xalia",
+                ):
+                    directory = tarfile.TarInfo(directory_name)
+                    directory.type = tarfile.DIRTYPE
+                    directory.mode = 0o755
+                    tar.addfile(directory)
+
+                real = tarfile.TarInfo(
+                    "share/mono/wine-mono-11.3.0/lib/x86_64/SDL3.dll"
+                )
+                real.size = len(payload)
+                real.mode = 0o644
+                tar.addfile(real, io.BytesIO(payload))
+
+                mono_alias = tarfile.TarInfo(
+                    "share/mono/wine-mono"
+                )
+                mono_alias.type = tarfile.SYMTYPE
+                mono_alias.linkname = "wine-mono-11.3.0"
+                tar.addfile(mono_alias)
+
+                xalia_alias = tarfile.TarInfo(
+                    "share/xalia/SDL3.dll"
+                )
+                xalia_alias.type = tarfile.SYMTYPE
+                xalia_alias.linkname = (
+                    "../mono/wine-mono/lib/x86_64/SDL3.dll"
+                )
+                tar.addfile(xalia_alias)
+
+            safe_extract_tar(archive, destination)
+
+            alias = destination / "share" / "xalia" / "SDL3.dll"
+
+            self.assertTrue(alias.is_symlink())
+            self.assertEqual(
+                alias.resolve().read_bytes(),
+                payload,
+            )
+
+    def test_symlink_cycle_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            archive = root / "cycle.tar"
+
+            with tarfile.open(archive, "w") as tar:
+                first = tarfile.TarInfo("first")
+                first.type = tarfile.SYMTYPE
+                first.linkname = "second"
+                tar.addfile(first)
+
+                second = tarfile.TarInfo("second")
+                second.type = tarfile.SYMTYPE
+                second.linkname = "first"
+                tar.addfile(second)
+
+            with self.assertRaises(ArtifactError):
+                safe_extract_tar(
+                    archive,
+                    root / "extract",
+                )
+
+    def test_missing_symlink_target_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            archive = root / "missing.tar"
+
+            with tarfile.open(archive, "w") as tar:
+                alias = tarfile.TarInfo("alias")
+                alias.type = tarfile.SYMTYPE
+                alias.linkname = "does-not-exist"
+                tar.addfile(alias)
+
+            with self.assertRaises(ArtifactError):
+                safe_extract_tar(
+                    archive,
+                    root / "extract",
+                )
+
+    def test_member_beneath_symlink_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            archive = root / "nested-link.tar"
+
+            with tarfile.open(archive, "w") as tar:
+                real = tarfile.TarInfo("real")
+                real.type = tarfile.DIRTYPE
+                real.mode = 0o755
+                tar.addfile(real)
+
+                alias = tarfile.TarInfo("alias")
+                alias.type = tarfile.SYMTYPE
+                alias.linkname = "real"
+                tar.addfile(alias)
+
+                payload = b"unsafe nesting"
+                child = tarfile.TarInfo("alias/child")
+                child.size = len(payload)
+                child.mode = 0o644
+                tar.addfile(
+                    child,
+                    io.BytesIO(payload),
+                )
+
+            with self.assertRaises(ArtifactError):
+                safe_extract_tar(
+                    archive,
+                    root / "extract",
+                )
+
     def test_umu_install_from_local_archive(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

@@ -132,6 +132,90 @@ def _safe_link_target(
     return target
 
 
+def _resolve_archive_path(
+    name: str,
+    member_map: dict[str, tarfile.TarInfo],
+    resolved: dict[str, str],
+    resolving: set[str],
+) -> str:
+    """Resolve an archive path using normal Unix symlink semantics.
+
+    Symlinks may appear either as the final path component or as an
+    intermediate directory component. Every resolution must remain within the
+    archive and ultimately identify a regular file or directory.
+    """
+
+    name = _safe_member_name(name)
+
+    if name in resolved:
+        return resolved[name]
+
+    if name in resolving:
+        raise ArtifactError(
+            f"symlink cycle detected while resolving archive path: {name}"
+        )
+
+    resolving.add(name)
+
+    try:
+        parts = PurePosixPath(name).parts
+        current_parts: list[str] = []
+
+        for index, part in enumerate(parts):
+            current_parts.append(part)
+            candidate = "/".join(current_parts)
+            member = member_map.get(candidate)
+
+            if member is None:
+                raise ArtifactError(
+                    f"symlink target is not present in archive: {name}"
+                )
+
+            if member.issym():
+                target = _safe_link_target(
+                    candidate,
+                    member.linkname,
+                )
+
+                remaining = parts[index + 1 :]
+
+                if remaining:
+                    target = _safe_member_name(
+                        posixpath.join(
+                            target,
+                            *remaining,
+                        )
+                    )
+
+                final_target = _resolve_archive_path(
+                    target,
+                    member_map,
+                    resolved,
+                    resolving,
+                )
+
+                resolved[name] = final_target
+                return final_target
+
+            if member.isfile() and index != len(parts) - 1:
+                raise ArtifactError(
+                    f"archive path traverses regular file: {candidate}"
+                )
+
+        final = member_map.get(name)
+
+        if final is None or not (final.isfile() or final.isdir()):
+            raise ArtifactError(
+                f"archive path does not resolve to a regular entry: {name}"
+            )
+
+        resolved[name] = name
+        return name
+
+    finally:
+        resolving.remove(name)
+
+
 def safe_extract_tar(
     archive: Path,
     destination: Path,
@@ -180,11 +264,11 @@ def safe_extract_tar(
                 if member.issym()
             }
 
-            # No regular file or directory may be nested beneath a symlink.
-            for name, member in member_map.items():
-                if member.issym():
-                    continue
-
+            # No archive member may be nested beneath a symlink.
+            #
+            # This prevents extraction from ever traversing a symlink while
+            # creating a child path.
+            for name in member_map:
                 parents = PurePosixPath(name).parents
 
                 for parent in parents:
@@ -199,28 +283,25 @@ def safe_extract_tar(
                             f"{name}"
                         )
 
-            # Validate all links before creating anything.
+            # Validate every symlink chain before creating anything.
+            #
+            # Symlink-to-symlink chains are valid, but every chain must
+            # ultimately resolve to a regular file or directory contained
+            # within this archive. Cycles and missing targets are rejected.
+            resolved_links: dict[str, str] = {}
+
             for name, member in member_map.items():
-                if not member.issym():
-                    continue
-
-                target_name = _safe_link_target(
-                    name,
-                    member.linkname,
-                )
-
-                target = member_map.get(target_name)
-
-                if target is None:
-                    raise ArtifactError(
-                        f"symlink target is not present in archive: "
-                        f"{name} -> {member.linkname}"
+                if member.issym():
+                    target_name = _safe_link_target(
+                        name,
+                        member.linkname,
                     )
 
-                if not (target.isfile() or target.isdir()):
-                    raise ArtifactError(
-                        f"symlink target is not a regular archive entry: "
-                        f"{name} -> {member.linkname}"
+                    _resolve_archive_path(
+                        target_name,
+                        member_map,
+                        resolved_links,
+                        set(),
                     )
 
             # Directories first.
