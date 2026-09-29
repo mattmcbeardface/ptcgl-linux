@@ -11,6 +11,8 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Adw, GLib, Gtk
 
+GLib.set_application_name("Pokémon TCG Live")
+
 from .installer import InstallError, install_ptcgl
 from .launcher import LaunchError, launch_game
 from .runtime import RuntimePaths
