@@ -45,6 +45,14 @@
   <url type="bugtracker">https://github.com/mattmcbeardface/ptcgl-linux/issues</url>
 
   <releases>
+    <release version="0.1.2" date="2026-09-29">
+      <description>
+        <p>Version reporting fix.</p>
+        <ul>
+          <li>Report the installed release version correctly from the command line.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.1" date="2026-09-29">
       <description>
         <p>Launcher behavior fix.</p>
