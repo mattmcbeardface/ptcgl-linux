@@ -45,6 +45,14 @@
   <url type="bugtracker">https://github.com/mattmcbeardface/ptcgl-linux/issues</url>
 
   <releases>
+    <release version="0.1.1" date="2026-09-29">
+      <description>
+        <p>Launcher behavior fix.</p>
+        <ul>
+          <li>Launching the Flatpak directly now starts Pokémon TCG Live instead of displaying CLI help.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-09-29">
       <description>
         <p>Initial development release of the Flatpak application.</p>

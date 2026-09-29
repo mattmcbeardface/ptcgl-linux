@@ -51,8 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command is None:
-        parser.print_help()
-        return 0
+        args.command = "app"
 
     if args.command == "doctor":
         return print_doctor()
