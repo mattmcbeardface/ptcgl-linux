@@ -1,4 +1,6 @@
 app-id: io.github.PTCGLLinux
+default-branch: stable
+collection-id: io.github.PTCGLLinux.Repository
 
 runtime: org.gnome.Platform
 runtime-version: '49'

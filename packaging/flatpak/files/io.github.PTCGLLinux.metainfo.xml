@@ -45,7 +45,7 @@
   <url type="bugtracker">https://github.com/mattmcbeardface/ptcgl-linux/issues</url>
 
   <releases>
-    <release version="0.1.0.dev0" date="2026-09-29">
+    <release version="0.1.0" date="2026-09-29">
       <description>
         <p>Initial development release of the Flatpak application.</p>
         <ul>
