@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import sys
 
 from . import __version__
+from .deeplink import CallbackError, handle_callback
 from .diagnostics import print_doctor
 
 
@@ -51,6 +53,13 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "doctor":
         return print_doctor()
+
+    if args.command == "callback":
+        try:
+            return handle_callback(args.url)
+        except CallbackError as exc:
+            print(f"callback: {exc}", file=sys.stderr)
+            return 2
 
     print(f"{args.command}: not implemented yet")
     return 0
