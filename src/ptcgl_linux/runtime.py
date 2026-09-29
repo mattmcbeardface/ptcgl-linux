@@ -49,11 +49,9 @@ def runtime_paths(home: Path | None = None) -> RuntimePaths:
         prefix=prefix,
         umu=app_data / "toolchain" / "umu" / "umu-run",
         proton=(
-            home
-            / ".local"
-            / "share"
-            / "Steam"
-            / "compatibilitytools.d"
+            app_data
+            / "toolchain"
+            / "proton"
             / KNOWN_GOOD_PROTON
         ),
         steamrt4=home / ".local" / "share" / "umu" / "steamrt4",

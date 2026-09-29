@@ -24,8 +24,20 @@ class RuntimePathTests(unittest.TestCase):
 
     def test_known_good_proton_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            paths = runtime_paths(Path(tmp))
-            self.assertEqual(paths.proton.name, KNOWN_GOOD_PROTON)
+            home = Path(tmp)
+            paths = runtime_paths(home)
+
+            expected = (
+                home
+                / ".local"
+                / "share"
+                / "ptcgl-linux"
+                / "toolchain"
+                / "proton"
+                / KNOWN_GOOD_PROTON
+            )
+
+            self.assertEqual(paths.proton, expected)
 
     def test_vc_runtime_set(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
