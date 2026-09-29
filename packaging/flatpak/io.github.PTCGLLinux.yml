@@ -92,6 +92,7 @@ modules:
       - python3 -m pip install --no-deps --no-build-isolation --prefix=/app .
       - install -Dm644 io.github.PTCGLLinux.desktop /app/share/applications/io.github.PTCGLLinux.desktop
       - install -Dm644 io.github.PTCGLLinux.Callback.desktop /app/share/applications/io.github.PTCGLLinux.Callback.desktop
+      - install -Dm644 io.github.PTCGLLinux.png /app/share/icons/hicolor/512x512/apps/io.github.PTCGLLinux.png
 
     sources:
       - type: dir
@@ -107,3 +108,6 @@ modules:
 
       - type: file
         path: files/io.github.PTCGLLinux.Callback.desktop
+
+      - type: file
+        path: files/io.github.PTCGLLinux.png

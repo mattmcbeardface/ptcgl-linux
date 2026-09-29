@@ -14,6 +14,7 @@ from .launcher import LaunchError, launch_game
 
 COMMANDS = (
     "install",
+    "app",
     "play",
     "repair",
     "doctor",
@@ -72,6 +73,15 @@ def main(argv: list[str] | None = None) -> int:
 
         print(f"install: ready: {paths.game}")
         return 0
+
+    if args.command == "app":
+        from .desktop import run_desktop_app
+
+        try:
+            return run_desktop_app()
+        except LaunchError as exc:
+            print(f"app: {exc}", file=sys.stderr)
+            return 2
 
     if args.command == "play":
         try:
