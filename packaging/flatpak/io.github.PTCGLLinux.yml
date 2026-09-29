@@ -18,6 +18,7 @@ sdk-extensions:
 finish-args:
   - --share=ipc
   - --share=network
+  - --own-name=com.steampowered.*
   - --filesystem=xdg-data/umu:create
   - --socket=x11
   - --socket=wayland
@@ -89,6 +90,8 @@ modules:
 
     build-commands:
       - python3 -m pip install --no-deps --no-build-isolation --prefix=/app .
+      - install -Dm644 io.github.PTCGLLinux.desktop /app/share/applications/io.github.PTCGLLinux.desktop
+      - install -Dm644 io.github.PTCGLLinux.Callback.desktop /app/share/applications/io.github.PTCGLLinux.Callback.desktop
 
     sources:
       - type: dir
@@ -98,3 +101,9 @@ modules:
           - .venv
           - __pycache__
           - '*.pyc'
+
+      - type: file
+        path: files/io.github.PTCGLLinux.desktop
+
+      - type: file
+        path: files/io.github.PTCGLLinux.Callback.desktop

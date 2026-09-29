@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=PTCGL-Linux
+Comment=Unofficial Linux compatibility package for Pokémon TCG Live
+Exec=ptcgl-linux play
+Terminal=false
+Categories=Game;

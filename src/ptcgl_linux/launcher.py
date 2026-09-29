@@ -43,6 +43,7 @@ def launch_game(
             "GAMEID": "0",
             "WINEPREFIX": str(paths.prefix),
             "PROTONPATH": str(paths.proton),
+            "UMU_CONTAINER_NSENTER": "1",
         }
     )
 

@@ -77,6 +77,10 @@ class LauncherTests(unittest.TestCase):
                 env["PROTONPATH"],
                 str(paths.proton),
             )
+            self.assertEqual(
+                env["UMU_CONTAINER_NSENTER"],
+                "1",
+            )
 
     def test_game_exit_status_is_returned(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

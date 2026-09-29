@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=PTCGL-Linux Login Handler
+Exec=ptcgl-linux callback %u
+Terminal=false
+NoDisplay=true
+MimeType=x-scheme-handler/tpcitcgapp;
