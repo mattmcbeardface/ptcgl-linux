@@ -8,7 +8,7 @@ version = "0.1.3"
 description = "Linux launcher and compatibility environment for Pokémon TCG Live"
 requires-python = ">=3.11"
 authors = [
-    { name = "Matt McBeardface" }
+    { name = "MattMcBeardface" }
 ]
 dependencies = []
 

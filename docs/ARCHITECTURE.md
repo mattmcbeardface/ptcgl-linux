@@ -16,25 +16,27 @@ The project does not reimplement Pokémon TCG Live.
 - Automatic `tpcitcgapp://` callback handling.
 - No authentication credentials in logs.
 - Repairable and diagnosable installation.
-- CLI backend independent from the eventual graphical interface.
+- Shared backend used by both the graphical desktop flow and CLI tools.
 
 ## Components
 
-### CLI/backend
+### Desktop application and CLI backend
 
-The backend owns all installation and runtime logic.
+The backend owns the installation and runtime logic used by both the graphical
+desktop application and command-line tools.
 
-Planned commands:
+Current commands:
 
 - `ptcgl-linux install`
+- `ptcgl-linux app`
 - `ptcgl-linux play`
 - `ptcgl-linux repair`
 - `ptcgl-linux doctor`
 - `ptcgl-linux uninstall`
 - `ptcgl-linux callback <URI>`
 
-The GUI will call the same backend rather than implement separate installation
-or launch logic.
+Running the packaged Flatpak normally enters the same desktop application path
+as `ptcgl-linux app`.
 
 ### Runtime manager
 
