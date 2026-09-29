@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,6 +11,10 @@ from .paths import data_home
 
 KNOWN_GOOD_UMU_VERSION = "1.4.4"
 KNOWN_GOOD_PROTON = "GE-Proton11-7-x86_64"
+
+FLATPAK_APP_ID = "io.github.PTCGLLinux"
+FLATPAK_UMU_PATH = Path("/app/libexec/ptcgl-linux/umu-run")
+
 GAME_RELATIVE_PATH = Path(
     "drive_c/users/steamuser/"
     "The Pokémon Company International/"
@@ -35,6 +40,13 @@ class RuntimePaths:
     game: Path
 
 
+def _umu_path(app_data: Path) -> Path:
+    if os.environ.get("FLATPAK_ID") == FLATPAK_APP_ID:
+        return FLATPAK_UMU_PATH
+
+    return app_data / "toolchain" / "umu" / "umu-run"
+
+
 def runtime_paths(home: Path | None = None) -> RuntimePaths:
     if home is None:
         home = Path.home()
@@ -47,7 +59,7 @@ def runtime_paths(home: Path | None = None) -> RuntimePaths:
     return RuntimePaths(
         data_dir=app_data,
         prefix=prefix,
-        umu=app_data / "toolchain" / "umu" / "umu-run",
+        umu=_umu_path(app_data),
         proton=(
             app_data
             / "toolchain"

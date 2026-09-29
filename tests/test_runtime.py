@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from ptcgl_linux.runtime import (
@@ -21,6 +22,21 @@ class RuntimePathTests(unittest.TestCase):
             self.assertEqual(paths.data_dir, expected_data)
             self.assertEqual(paths.prefix, expected_data / "prefix")
             self.assertEqual(paths.game, paths.prefix / GAME_RELATIVE_PATH)
+
+    def test_flatpak_uses_packaged_umu(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+
+            with patch.dict(
+                "os.environ",
+                {"FLATPAK_ID": "io.github.PTCGLLinux"},
+            ):
+                paths = runtime_paths(home)
+
+            self.assertEqual(
+                paths.umu,
+                Path("/app/libexec/ptcgl-linux/umu-run"),
+            )
 
     def test_known_good_proton_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
