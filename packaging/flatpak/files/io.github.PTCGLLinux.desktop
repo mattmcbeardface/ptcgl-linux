@@ -6,3 +6,4 @@ Comment=Unofficial Linux compatibility package for Pokémon TCG Live
 Exec=ptcgl-linux app
 Terminal=false
 Categories=Game;
+Keywords=Pokémon;Pokemon;TCG;Trading Card Game;Cards;

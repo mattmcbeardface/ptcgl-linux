@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2026 Matt McBeardface
+  SPDX-License-Identifier: CC0-1.0
+-->
+<component type="desktop-application">
+  <id>io.github.PTCGLLinux</id>
+
+  <name>Pokémon TCG Live</name>
+  <summary>Play Pokémon TCG Live on Linux</summary>
+
+  <developer id="io.github.mattmcbeardface">
+    <name>Matt McBeardface</name>
+  </developer>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <description>
+    <p>
+      PTCGL-Linux is an unofficial Linux compatibility package for
+      Pokémon TCG Live.
+    </p>
+    <p>
+      On first launch, the application prepares a managed Proton
+      compatibility environment and downloads and verifies the official
+      Pokémon TCG Live installer. The game itself is not distributed
+      inside this Flatpak.
+    </p>
+    <p>
+      Subsequent launches start Pokémon TCG Live directly. Browser-based
+      account authentication is integrated with the Linux desktop and
+      delivered to the running game through the managed compatibility
+      environment.
+    </p>
+    <p>
+      This project is not affiliated with, endorsed by, or sponsored by
+      The Pokémon Company International.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.github.PTCGLLinux.desktop</launchable>
+
+  <url type="homepage">https://github.com/mattmcbeardface/ptcgl-linux</url>
+  <url type="bugtracker">https://github.com/mattmcbeardface/ptcgl-linux/issues</url>
+
+  <releases>
+    <release version="0.1.0.dev0" date="2026-09-29">
+      <description>
+        <p>Initial development release of the Flatpak application.</p>
+        <ul>
+          <li>Automatic first-launch setup of the compatibility environment.</li>
+          <li>Verified installation of Pokémon TCG Live.</li>
+          <li>Direct game launch after initial setup.</li>
+          <li>Desktop browser authentication callback integration.</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+</component>

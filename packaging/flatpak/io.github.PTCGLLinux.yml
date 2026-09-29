@@ -93,6 +93,7 @@ modules:
       - install -Dm644 io.github.PTCGLLinux.desktop /app/share/applications/io.github.PTCGLLinux.desktop
       - install -Dm644 io.github.PTCGLLinux.Callback.desktop /app/share/applications/io.github.PTCGLLinux.Callback.desktop
       - install -Dm644 io.github.PTCGLLinux.png /app/share/icons/hicolor/512x512/apps/io.github.PTCGLLinux.png
+      - install -Dm644 io.github.PTCGLLinux.metainfo.xml /app/share/metainfo/io.github.PTCGLLinux.metainfo.xml
 
     sources:
       - type: dir
@@ -111,3 +112,6 @@ modules:
 
       - type: file
         path: files/io.github.PTCGLLinux.png
+
+      - type: file
+        path: files/io.github.PTCGLLinux.metainfo.xml
