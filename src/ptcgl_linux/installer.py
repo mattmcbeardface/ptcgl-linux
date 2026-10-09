@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import fcntl
 import os
 import subprocess
+import tempfile
+import urllib.error
+import urllib.request
+from contextlib import contextmanager
 from pathlib import Path
 
-from .artifacts import ArtifactError, download_verified, verify_sha256
 from .paths import cache_home
+from .installer_security import SignatureError, verify_pokemon_installer
 from .proton import install_proton
 from .runtime import RuntimePaths, runtime_paths, vc_runtime_paths
 from .umu import install_umu
@@ -18,10 +23,7 @@ PTCGL_INSTALLER_URL = (
     "https://installer.studio-prod.pokemon.com/installer/"
     "PokemonTCGLiveInstaller.msi"
 )
-PTCGL_INSTALLER_SHA256 = (
-    "cf970aded232fffc52263932bb0dc5627"
-    "642a8f489c73485f3d7b5d0c1e5127b"
-)
+PTCGL_INSTALLER_MAX_BYTES = 1024 * 1024 * 1024
 
 
 class InstallError(RuntimeError):
@@ -163,11 +165,34 @@ def install_vcrun2019(paths: RuntimePaths) -> None:
         )
 
 
+@contextmanager
+def _installer_cache_lock(cache: Path):
+    """Serialize installer acquisition across processes."""
+
+    lock_path = cache / ".pokemon-installer.lock"
+
+    with lock_path.open("a+b") as lock:
+        os.chmod(lock_path, 0o600)
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+
+        try:
+            yield
+        finally:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
+class _RejectRedirects(urllib.request.HTTPRedirectHandler):
+    """Never follow an installer download to another URL."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise InstallError("official installer endpoint redirected")
+
+
 def acquire_ptcgl_installer(
     *,
     artifact_cache: Path | None = None,
 ) -> Path:
-    """Acquire the pinned official Pokémon TCG Live MSI."""
+    """Download and authenticate the current official Pokémon MSI."""
 
     if artifact_cache is None:
         artifact_cache = cache_home() / "artifacts"
@@ -175,25 +200,106 @@ def acquire_ptcgl_installer(
     artifact_cache.mkdir(parents=True, exist_ok=True)
     os.chmod(artifact_cache, 0o700)
 
+    with _installer_cache_lock(artifact_cache):
+        return _acquire_ptcgl_installer_locked(artifact_cache)
+
+
+def _acquire_ptcgl_installer_locked(
+    artifact_cache: Path,
+) -> Path:
+    """Acquire and publish the MSI while holding the cache lock."""
+
     installer = artifact_cache / PTCGL_INSTALLER_NAME
-
-    if installer.exists():
-        if verify_sha256(installer, PTCGL_INSTALLER_SHA256):
-            os.chmod(installer, 0o600)
-            return installer
-
-        installer.unlink()
+    temporary: Path | None = None
 
     try:
-        return download_verified(
-            PTCGL_INSTALLER_URL,
-            installer,
-            PTCGL_INSTALLER_SHA256,
-        )
-    except ArtifactError as exc:
+        # Only the configured HTTPS endpoint is permitted.
+        if PTCGL_INSTALLER_URL != (
+            "https://installer.studio-prod.pokemon.com/installer/"
+            "PokemonTCGLiveInstaller.msi"
+        ):
+            raise InstallError("invalid official installer endpoint")
+
+        opener = urllib.request.build_opener(_RejectRedirects())
+
+        with tempfile.NamedTemporaryFile(
+            mode="wb",
+            dir=artifact_cache,
+            prefix=".pokemon-installer-",
+            suffix=".tmp",
+            delete=False,
+        ) as target:
+            temporary = Path(target.name)
+            os.chmod(temporary, 0o600)
+
+            with opener.open(
+                PTCGL_INSTALLER_URL,
+                timeout=60,
+            ) as response:
+                total = 0
+                content_length = response.headers.get("Content-Length")
+                expected = (
+                    int(content_length)
+                    if content_length and content_length.isdigit()
+                    else None
+                )
+
+                if expected is not None and expected > PTCGL_INSTALLER_MAX_BYTES:
+                    raise InstallError(
+                        "official installer exceeds maximum size"
+                    )
+
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+
+                    total += len(chunk)
+
+                    if total > PTCGL_INSTALLER_MAX_BYTES:
+                        raise InstallError(
+                            "official installer exceeds maximum size"
+                        )
+
+                    target.write(chunk)
+
+                if expected is not None and total != expected:
+                    raise InstallError(
+                        "official installer download is incomplete"
+                    )
+
+            target.flush()
+            os.fsync(target.fileno())
+
+        if total < 65536:
+            raise InstallError("official installer is unexpectedly small")
+
+        # MSI uses the OLE Compound File binary container.
+        with temporary.open("rb") as stream:
+            if stream.read(8) != bytes.fromhex("D0CF11E0A1B11AE1"):
+                raise InstallError("download is not a valid MSI container")
+
+        verify_pokemon_installer(temporary)
+
+        # Publish only after every verification succeeds.
+        os.replace(temporary, installer)
+        temporary = None
+        os.chmod(installer, 0o600)
+
+        return installer
+
+    except (
+        urllib.error.URLError,
+        OSError,
+        SignatureError,
+    ) as exc:
         raise InstallError(
-            "unable to acquire Pokémon TCG Live installer"
+            f"unable to acquire verified Pokémon installer: {exc}"
         ) from exc
+
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def install_game(

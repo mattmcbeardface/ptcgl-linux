@@ -37,6 +37,53 @@ def create_prefix(paths: RuntimePaths) -> None:
 
 
 class InstallerTests(unittest.TestCase):
+    def test_acquire_accepts_changed_official_installer(self) -> None:
+        from ptcgl_linux.installer import acquire_ptcgl_installer
+
+        class FakeResponse:
+            def __init__(self, payload):
+                self.payload = payload
+                self.position = 0
+                self.headers = {"Content-Length": str(len(payload))}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self, size):
+                chunk = self.payload[self.position:self.position + size]
+                self.position += len(chunk)
+                return chunk
+
+        magic = bytes.fromhex("D0CF11E0A1B11AE1")
+        first = magic + b"A" * 65536
+        second = magic + b"B" * 65536
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = Path(tmp)
+
+            for payload in (first, second):
+                with (
+                    patch(
+                        "ptcgl_linux.installer.urllib.request.build_opener"
+                    ) as build_opener,
+                    patch(
+                        "ptcgl_linux.installer.verify_pokemon_installer"
+                    ) as verify,
+                ):
+                    build_opener.return_value.open.return_value = (
+                        FakeResponse(payload)
+                    )
+
+                    result = acquire_ptcgl_installer(
+                        artifact_cache=cache,
+                    )
+
+                    verify.assert_called_once()
+                    self.assertEqual(result.read_bytes(), payload)
+
     def test_initialize_prefix_uses_umu(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             paths = make_paths(Path(tmp))

@@ -45,11 +45,14 @@
   <url type="bugtracker">https://github.com/mattmcbeardface/ptcgl-linux/issues</url>
 
   <releases>
-    <release version="0.1.3" date="2026-09-29">
+    <release version="0.1.4" date="2026-10-08">
       <description>
-        <p>Metadata update.</p>
+        <p>Installer and automatic update compatibility fixes.</p>
         <ul>
-          <li>Update the displayed developer name.</li>
+          <li>Fix the working directory used by the game's built-in updater.</li>
+          <li>Support updated official Pokémon installers without hardcoded MSI checksums.</li>
+          <li>Verify installer signatures and publisher identity before installation.</li>
+          <li>Improve download validation, interrupted-download handling, and installer cache safety.</li>
         </ul>
       </description>
     </release>
