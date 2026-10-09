@@ -66,6 +66,11 @@ class LauncherTests(unittest.TestCase):
                 ],
             )
 
+            self.assertEqual(
+                kwargs["cwd"],
+                paths.game.parent,
+            )
+
             env = kwargs["env"]
 
             self.assertEqual(env["GAMEID"], "0")

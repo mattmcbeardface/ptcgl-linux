@@ -54,6 +54,7 @@ def launch_game(
                 str(paths.game),
             ],
             env=env,
+            cwd=paths.game.parent,
             check=False,
         )
     except OSError as exc:

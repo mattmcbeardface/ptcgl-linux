@@ -87,6 +87,18 @@ modules:
         url: https://github.com/Open-Wine-Components/umu-launcher/releases/download/1.4.4/umu-launcher-1.4.4-zipapp.tar
         sha256: eb590691841f7fad3fc3ad8fd5db4ccb87849fe7948e62b28ece7a4ee48cc851
 
+  - name: osslsigncode
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_INSTALL_PREFIX=/app
+      - -DCMAKE_INSTALL_DATADIR=share
+      - -DBASH_COMPLETION_USER_DIR=/app/share
+    sources:
+      - type: archive
+        url: https://github.com/mtrojnar/osslsigncode/archive/refs/tags/2.14.tar.gz
+        sha256: 0f033fd6069387d2e489fbd2187e62f624764eb8c2758ee94e3e793e5150b5c5
+
   - name: ptcgl-linux
     buildsystem: simple
 
